@@ -111,6 +111,13 @@ flutter test                     # unit, repository and widget tests
 firebase emulators:exec --only firestore --project demo-campusfix "flutter test test_rules"
 ```
 
+To try the app without touching the live project, start the local emulators and point a debug build at them:
+
+```bash
+firebase emulators:start --only auth,firestore,storage --project demo-campusfix
+flutter run --dart-define=USE_FIREBASE_EMULATORS=true
+```
+
 ## Demo
 
 - Demo video: _link to be added_
