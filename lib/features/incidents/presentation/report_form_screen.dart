@@ -91,6 +91,8 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
   }
 
   Future<void> _pickPhoto() async {
+    // Otherwise focus returns to the last text field and reopens the keyboard.
+    FocusScope.of(context).unfocus();
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
@@ -132,6 +134,7 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
   }
 
   Future<void> _pickLocation() async {
+    FocusScope.of(context).unfocus();
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
