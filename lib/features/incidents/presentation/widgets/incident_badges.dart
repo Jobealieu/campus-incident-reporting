@@ -54,8 +54,18 @@ class TintedBadge extends StatelessWidget {
   final Color color;
   final IconData? icon;
 
+  /// Shifts the brand colour's lightness so text keeps >= 4.5:1 contrast on
+  /// the tinted background in both themes.
+  static Color readableOn(Color color, Brightness brightness) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness(brightness == Brightness.light ? 0.27 : 0.75)
+        .toColor();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final foreground = readableOn(color, Theme.of(context).brightness);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -66,13 +76,13 @@ class TintedBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 14, color: color),
+            Icon(icon, size: 14, color: foreground),
             const SizedBox(width: 4),
           ],
           Text(
             label,
             style: TextStyle(
-              color: color,
+              color: foreground,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),

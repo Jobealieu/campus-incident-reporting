@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/loading_button.dart';
 import '../../../core/widgets/state_views.dart';
@@ -79,7 +80,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () => context.push('/forgot-password'),
+                  onPressed: () => context.push(AppRoutes.forgotPassword),
                   child: const Text('Forgot password?'),
                 ),
               ),
@@ -96,7 +97,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 children: [
                   const Text('New to CampusFix?'),
                   TextButton(
-                    onPressed: () => context.push('/sign-up'),
+                    onPressed: () => context.push(AppRoutes.signUp),
                     child: const Text('Create an account'),
                   ),
                 ],

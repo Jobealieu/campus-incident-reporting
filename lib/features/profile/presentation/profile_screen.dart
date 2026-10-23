@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../core/widgets/user_avatar.dart';
@@ -73,7 +74,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 title: const Text('Manage staff access'),
                 subtitle: const Text('Promote or demote campus staff'),
                 trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.push('/admin/users'),
+                onTap: () => context.push(AppRoutes.manageUsers),
               ),
             ),
           ],
@@ -138,7 +139,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           : 'Nothing here',
                       action: incidents.isEmpty
                           ? FilledButton.icon(
-                              onPressed: () => context.push('/report/new'),
+                              onPressed: () =>
+                                  context.push(AppRoutes.newReport),
                               icon: const Icon(Icons.add_rounded),
                               label: const Text('Report an issue'),
                             )

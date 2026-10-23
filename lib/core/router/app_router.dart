@@ -14,9 +14,14 @@ import '../../features/incidents/presentation/report_form_screen.dart';
 import '../../features/incidents/presentation/reports_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import 'app_shell.dart';
+import 'routes.dart';
 import 'splash_screen.dart';
 
-const _publicRoutes = {'/sign-in', '/sign-up', '/forgot-password'};
+const _publicRoutes = {
+  AppRoutes.signIn,
+  AppRoutes.signUp,
+  AppRoutes.forgotPassword,
+};
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Re-run redirects whenever auth state or the user's profile changes.
@@ -26,19 +31,19 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
-    initialLocation: '/home',
+    initialLocation: AppRoutes.home,
     refreshListenable: refresh,
     redirect: (context, state) => _redirect(ref, state.matchedLocation),
     routes: [
-      GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
-      GoRoute(path: '/sign-in', builder: (_, _) => const SignInScreen()),
-      GoRoute(path: '/sign-up', builder: (_, _) => const SignUpScreen()),
+      GoRoute(path: AppRoutes.splash, builder: (_, _) => const SplashScreen()),
+      GoRoute(path: AppRoutes.signIn, builder: (_, _) => const SignInScreen()),
+      GoRoute(path: AppRoutes.signUp, builder: (_, _) => const SignUpScreen()),
       GoRoute(
-        path: '/forgot-password',
+        path: AppRoutes.forgotPassword,
         builder: (_, _) => const ForgotPasswordScreen(),
       ),
       GoRoute(
-        path: '/verify-email',
+        path: AppRoutes.verifyEmail,
         builder: (_, _) => const VerifyEmailScreen(),
       ),
       StatefulShellRoute.indexedStack(
@@ -46,13 +51,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (_, _) => const HomeScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/reports',
+                path: AppRoutes.reports,
                 builder: (_, _) => const ReportsScreen(),
               ),
             ],
@@ -60,16 +68,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/profile',
+                path: AppRoutes.profile,
                 builder: (_, _) => const ProfileScreen(),
               ),
             ],
           ),
         ],
       ),
-      GoRoute(path: '/report/new', builder: (_, _) => const ReportFormScreen()),
       GoRoute(
-        path: '/admin/users',
+        path: AppRoutes.newReport,
+        builder: (_, _) => const ReportFormScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.manageUsers,
         builder: (_, _) => const ManageUsersScreen(),
       ),
       GoRoute(
@@ -94,23 +105,27 @@ final routerProvider = Provider<GoRouter>((ref) {
 /// → splash; admin pages → admins only.
 String? _redirect(Ref ref, String location) {
   final auth = ref.read(authStateProvider);
-  if (!auth.hasValue) return location == '/splash' ? null : '/splash';
+  if (!auth.hasValue) {
+    return location == AppRoutes.splash ? null : AppRoutes.splash;
+  }
 
   final user = auth.value;
   if (user == null) {
-    return _publicRoutes.contains(location) ? null : '/sign-in';
+    return _publicRoutes.contains(location) ? null : AppRoutes.signIn;
   }
   if (!user.emailVerified) {
-    return location == '/verify-email' ? null : '/verify-email';
+    return location == AppRoutes.verifyEmail ? null : AppRoutes.verifyEmail;
   }
 
   final profile = ref.read(currentUserProvider).value;
-  if (profile == null) return location == '/splash' ? null : '/splash';
-  if (location.startsWith('/admin') && !profile.isAdmin) return '/home';
+  if (profile == null) {
+    return location == AppRoutes.splash ? null : AppRoutes.splash;
+  }
+  if (location.startsWith('/admin') && !profile.isAdmin) return AppRoutes.home;
 
   final onEntryRoute =
       _publicRoutes.contains(location) ||
-      location == '/verify-email' ||
-      location == '/splash';
-  return onEntryRoute ? '/home' : null;
+      location == AppRoutes.verifyEmail ||
+      location == AppRoutes.splash;
+  return onEntryRoute ? AppRoutes.home : null;
 }

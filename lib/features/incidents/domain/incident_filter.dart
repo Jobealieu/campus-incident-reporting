@@ -33,4 +33,14 @@ class IncidentFilter {
 
   List<Incident> apply(List<Incident> incidents) =>
       incidents.where(matches).toList();
+
+  @override
+  bool operator ==(Object other) =>
+      other is IncidentFilter &&
+      other.query == query &&
+      other.status == status &&
+      other.category == category;
+
+  @override
+  int get hashCode => Object.hash(query, status, category);
 }

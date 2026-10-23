@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../../auth/application/auth_providers.dart';
@@ -63,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => context.go('/reports'),
+                  onPressed: () => context.go(AppRoutes.reports),
                   child: const Text('See all'),
                 ),
               ],
@@ -125,9 +126,10 @@ class _Greeting extends StatelessWidget {
             ],
           ),
         ),
-        GestureDetector(
-          onTap: () => context.go('/profile'),
-          child: UserAvatar(name: user.displayName, radius: 24),
+        IconButton(
+          tooltip: 'Open profile',
+          onPressed: () => context.go(AppRoutes.profile),
+          icon: UserAvatar(name: user.displayName, radius: 24),
         ),
       ],
     );
@@ -202,7 +204,7 @@ class _StudentHero extends StatelessWidget {
     title: 'See an issue on campus?',
     message: 'Report it and help improve our learning environment.',
     actionLabel: 'Report an issue',
-    onAction: () => context.push('/report/new'),
+    onAction: () => context.push(AppRoutes.newReport),
   );
 }
 
@@ -223,7 +225,7 @@ class _StaffHero extends ConsumerWidget {
     onAction: () {
       final filter = ref.read(incidentFilterProvider.notifier)..clear();
       if (newCount > 0) filter.setStatus(IncidentStatus.submitted);
-      context.go('/reports');
+      context.go(AppRoutes.reports);
     },
   );
 }

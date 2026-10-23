@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/routes.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../domain/incident.dart';
 import 'incident_badges.dart';
@@ -20,7 +21,7 @@ class IncidentCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.push('/incident/${incident.id}'),
+        onTap: () => context.push(AppRoutes.incident(incident.id)),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
