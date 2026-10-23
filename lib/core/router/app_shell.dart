@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'routes.dart';
+
 /// Bottom navigation for the three main tabs, plus the "Report" action.
 class AppShell extends StatelessWidget {
   const AppShell({required this.shell, super.key});
@@ -14,7 +16,7 @@ class AppShell extends StatelessWidget {
       floatingActionButton: shell.currentIndex == 2
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => context.push('/report/new'),
+              onPressed: () => context.push(AppRoutes.newReport),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Report'),
             ),

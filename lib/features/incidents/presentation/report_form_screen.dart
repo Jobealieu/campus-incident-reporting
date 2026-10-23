@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/loading_button.dart';
@@ -76,7 +77,18 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
     super.dispose();
   }
 
-  void _markDirty() => _isDirty = true;
+  void _markDirty() {
+    if (!_isDirty) setState(() => _isDirty = true);
+  }
+
+  /// Clears the unsaved-changes guard, then navigates once PopScope has
+  /// rebuilt with canPop: true (otherwise the pop would be intercepted).
+  void _leave(void Function() navigate) {
+    setState(() => _isDirty = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) navigate();
+    });
+  }
 
   Future<void> _pickPhoto() async {
     final source = await showModalBottomSheet<ImageSource>(
@@ -140,7 +152,7 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
     );
     if (picked != null) {
       _location.text = picked;
-      _isDirty = true;
+      _markDirty();
     }
   }
 
@@ -161,9 +173,8 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
       );
       if (!mounted) return;
       if (ok) {
-        _isDirty = false;
         context.showSnack('Report updated');
-        context.pop();
+        _leave(context.pop);
       } else {
         _showError();
       }
@@ -183,9 +194,8 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
     );
     if (!mounted) return;
     if (id == null) return _showError();
-    _isDirty = false;
     context.showSnack('Report submitted. Staff have been notified.');
-    context.pushReplacement('/incident/$id');
+    _leave(() => context.pushReplacement(AppRoutes.incident(id)));
   }
 
   void _showError() => context.showSnack(
@@ -200,7 +210,7 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
       confirmLabel: 'Discard',
       isDestructive: true,
     );
-    if (discard && mounted) context.pop();
+    if (discard && mounted) _leave(context.pop);
   }
 
   @override

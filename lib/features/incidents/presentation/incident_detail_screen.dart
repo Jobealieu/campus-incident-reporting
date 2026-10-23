@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/utils/date_format.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/state_views.dart';
@@ -94,7 +95,7 @@ class _IncidentDetail extends ConsumerWidget {
             PopupMenuButton<_MenuAction>(
               onSelected: (action) => switch (action) {
                 _MenuAction.edit => context.push(
-                  '/incident/${incident.id}/edit',
+                  AppRoutes.editIncident(incident.id),
                 ),
                 _MenuAction.delete => _delete(context, ref),
               },
