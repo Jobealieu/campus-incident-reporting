@@ -12,6 +12,7 @@ import '../domain/incident.dart';
 import '../domain/incident_enums.dart';
 import 'widgets/incident_badges.dart';
 import 'widgets/status_timeline.dart';
+import 'widgets/status_update_sheet.dart';
 
 class IncidentDetailScreen extends ConsumerWidget {
   const IncidentDetailScreen({required this.incidentId, super.key});
@@ -117,6 +118,18 @@ class _IncidentDetail extends ConsumerWidget {
             ),
         ],
       ),
+      bottomNavigationBar: user.isStaff
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: FilledButton.icon(
+                  onPressed: () => showStatusUpdateSheet(context, incident),
+                  icon: const Icon(Icons.edit_note_rounded),
+                  label: const Text('Update status'),
+                ),
+              ),
+            )
+          : null,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [

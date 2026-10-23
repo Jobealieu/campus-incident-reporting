@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/admin/presentation/manage_users_screen.dart';
 import '../../features/auth/application/auth_providers.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
@@ -67,6 +68,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(path: '/report/new', builder: (_, _) => const ReportFormScreen()),
+      GoRoute(
+        path: '/admin/users',
+        builder: (_, _) => const ManageUsersScreen(),
+      ),
       GoRoute(
         path: '/incident/:id',
         builder: (_, state) =>
