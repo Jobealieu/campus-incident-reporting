@@ -70,10 +70,10 @@ Future<int> _send(
 
 Map<String, Object?> _value(Object? value) => switch (value) {
   null => {'nullValue': null},
-  bool b => {'booleanValue': b},
-  int i => {'integerValue': '$i'},
-  String s => {'stringValue': s},
-  List<Object?> list => {
+  final bool b => {'booleanValue': b},
+  final int i => {'integerValue': '$i'},
+  final String s => {'stringValue': s},
+  final List<Object?> list => {
     'arrayValue': {'values': list.map(_value).toList()},
   },
   _ => throw ArgumentError(value),
