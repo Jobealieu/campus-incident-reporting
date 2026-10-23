@@ -25,6 +25,12 @@ final currentUserProvider = StreamProvider<AppUser?>((ref) {
   return ref.watch(authRepositoryProvider).watchProfile(uid);
 });
 
+/// Any user's profile. Security rules allow this for the user and staff only,
+/// so staff can see who filed an anonymous report.
+final userProfileProvider = StreamProvider.autoDispose.family<AppUser?, String>(
+  (ref, uid) => ref.watch(authRepositoryProvider).watchProfile(uid),
+);
+
 /// Runs auth actions and exposes their loading/error state to the UI.
 class AuthController extends AsyncNotifier<void> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
