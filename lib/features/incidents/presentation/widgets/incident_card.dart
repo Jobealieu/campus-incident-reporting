@@ -5,6 +5,7 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../domain/incident.dart';
 import 'incident_badges.dart';
+import 'incident_photo.dart';
 
 class IncidentCard extends StatelessWidget {
   const IncidentCard({required this.incident, super.key});
@@ -107,17 +108,16 @@ class IncidentThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fallback = CategoryIcon(incident.category, size: size);
-    final url = incident.photoUrl;
-    if (url == null) return fallback;
+    if (!incident.hasPhoto) return fallback;
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.3),
-      child: Image.network(
-        url,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        cacheWidth: (size * 3).round(),
-        errorBuilder: (_, _, _) => fallback,
+      child: SizedBox.square(
+        dimension: size,
+        child: IncidentPhotoImage(
+          incident: incident,
+          fallback: fallback,
+          cacheWidth: (size * 3).round(),
+        ),
       ),
     );
   }

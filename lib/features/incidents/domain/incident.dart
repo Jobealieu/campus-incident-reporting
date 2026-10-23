@@ -71,6 +71,8 @@ class Incident {
 
   int get upvoteCount => upvoterIds.length;
 
+  bool get hasPhoto => photoUrl != null || photoPath != null;
+
   bool isReportedBy(String uid) => reporterId == uid;
 
   bool hasUpvoted(String uid) => upvoterIds.contains(uid);

@@ -8,7 +8,7 @@ import 'package:campus_fix/features/incidents/domain/incident_enums.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _FakePhotoStorage implements PhotoStorage {
+class _FakePhotoStore implements PhotoStore {
   final deleted = <String>[];
 
   @override
@@ -54,12 +54,12 @@ IncidentDraft _draft({
 
 void main() {
   late FakeFirebaseFirestore firestore;
-  late _FakePhotoStorage photos;
+  late _FakePhotoStore photos;
   late IncidentRepository repository;
 
   setUp(() async {
     firestore = FakeFirebaseFirestore();
-    photos = _FakePhotoStorage();
+    photos = _FakePhotoStore();
     repository = IncidentRepository(firestore, photos);
     await firestore.doc('users/${_student.uid}').set({'role': 'student'});
   });

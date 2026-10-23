@@ -10,6 +10,7 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -71,6 +72,7 @@ Future<int> _send(
 Map<String, Object?> _value(Object? value) => switch (value) {
   null => {'nullValue': null},
   final bool b => {'booleanValue': b},
+  final Uint8List bytes => {'bytesValue': base64Encode(bytes)},
   final int i => {'integerValue': '$i'},
   final String s => {'stringValue': s},
   final List<Object?> list => {
@@ -463,6 +465,59 @@ void main() {
         ]),
         isFalse,
       );
+    });
+  });
+
+  group('incident photos stored in Firestore', () {
+    final jpeg = Uint8List.fromList(List.filled(2048, 7));
+
+    Map<String, Object?> photo(_User owner) => _write(
+      'incidentPhotos/r1',
+      {'ownerId': owner.uid, 'image': jpeg, 'contentType': 'image/jpeg'},
+      serverTime: ['createdAt'],
+    );
+
+    Map<String, Object?> withPhoto(_User reporter, {bool isPrivate = false}) =>
+        _incident(reporter, isPrivate: isPrivate)
+          ..['photoPath'] = 'incidentPhotos/r1';
+
+    test('reporters can upload a photo and attach it', () async {
+      expect(await _commit(student, [photo(student)]), isTrue);
+      expect(await _createIncident(student, 'r1', withPhoto(student)), isTrue);
+    });
+
+    test('photos cannot be uploaded in someone else\'s name', () async {
+      expect(await _commit(student, [photo(otherStudent)]), isFalse);
+    });
+
+    test('a report cannot reuse another user\'s photo', () async {
+      expect(await _commit(otherStudent, [photo(otherStudent)]), isTrue);
+      expect(await _createIncident(student, 'r1', withPhoto(student)), isFalse);
+    });
+
+    test('photos of an existing report cannot be replaced', () async {
+      await _seed('incidents/r1', _incident(student));
+      expect(await _commit(student, [photo(student)]), isFalse);
+    });
+
+    test('photos of private reports stay private', () async {
+      expect(await _commit(student, [photo(student)]), isTrue);
+      expect(
+        await _createIncident(
+          student,
+          'r1',
+          withPhoto(student, isPrivate: true),
+        ),
+        isTrue,
+      );
+      expect(await _read(otherStudent, 'incidentPhotos/r1'), isFalse);
+      expect(await _read(staff, 'incidentPhotos/r1'), isTrue);
+    });
+
+    test('photos of public reports are visible to students', () async {
+      expect(await _commit(student, [photo(student)]), isTrue);
+      expect(await _createIncident(student, 'r1', withPhoto(student)), isTrue);
+      expect(await _read(otherStudent, 'incidentPhotos/r1'), isTrue);
     });
   });
 

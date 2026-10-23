@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "278575054460",
+    "project_id": "campusfix-alu-ajobe",
+    "storage_bucket": "campusfix-alu-ajobe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:278575054460:android:e2ff20d042b7e8322013f9",
+        "android_client_info": {
+          "package_name": "com.alieujobe.campus_fix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-Oe-8rgu5-QDuEELBL_QSVOX1ZCA9Q6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

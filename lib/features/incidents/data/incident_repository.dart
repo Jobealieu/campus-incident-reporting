@@ -13,7 +13,7 @@ class IncidentRepository {
   IncidentRepository(this._firestore, this._photos);
 
   final FirebaseFirestore _firestore;
-  final PhotoStorage _photos;
+  final PhotoStore _photos;
 
   // ponytail: newest 200 per feed, searched client-side. Add cursor
   // pagination (startAfterDocument) when a feed regularly exceeds this.
