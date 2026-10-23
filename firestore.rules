@@ -1,0 +1,210 @@
+rules_version = '2';
+
+// Access model
+// - Only verified @alustudent.com / @alueducation.com accounts get in.
+// - Everyone starts as a student; only an admin can grant staff/admin.
+// - Students see public reports and their own; staff see everything.
+// - Only staff change status/priority; reporters edit or withdraw a report
+//   only while it is still "submitted".
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasAluEmail() {
+      return signedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.lower()
+             .matches('^[^@]+@(alustudent|alueducation)[.]com$');
+    }
+
+    function verified() {
+      return hasAluEmail() && request.auth.token.email_verified == true;
+    }
+
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isStaff() {
+      return verified() && userData().role in ['staff', 'admin'];
+    }
+
+    function isAdmin() {
+      return verified() && userData().role == 'admin';
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function isText(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function validStatus(status) {
+      return status in ['submitted', 'underReview', 'inProgress', 'resolved', 'rejected'];
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isStaff());
+
+      allow create: if hasAluEmail()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'displayName', 'role', 'createdAt'])
+        && request.resource.data.email == request.auth.token.email
+        && isText(request.resource.data.displayName, 2, 60)
+        && request.resource.data.role == 'student'
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if (
+          // Owners may rename themselves and stamp lastReportAt (rate limit).
+          verified()
+          && request.auth.uid == uid
+          && changedKeys().hasOnly(['displayName', 'lastReportAt'])
+          && (!('displayName' in changedKeys())
+              || isText(request.resource.data.displayName, 2, 60))
+          && (!('lastReportAt' in changedKeys())
+              || request.resource.data.lastReportAt == request.time)
+        ) || (
+          // Admins change other people's roles, never their own.
+          isAdmin()
+          && request.auth.uid != uid
+          && changedKeys().hasOnly(['role'])
+          && request.resource.data.role in ['student', 'staff', 'admin']
+        );
+
+      allow delete: if false;
+    }
+
+    match /incidents/{incidentId} {
+      function canView(data) {
+        return isStaff()
+          || data.isPrivate == false
+          || data.reporterId == request.auth.uid;
+      }
+
+      function validDetails(data) {
+        return isText(data.title, 5, 80)
+          && isText(data.description, 10, 1000)
+          && isText(data.location, 2, 100);
+      }
+
+      function incidentFields() {
+        return ['title', 'description', 'category', 'location', 'status',
+                'priority', 'reporterId', 'reporterName', 'isAnonymous',
+                'isPrivate', 'photoUrl', 'photoPath', 'upvoterIds',
+                'createdAt', 'updatedAt'];
+      }
+
+      function isWithinRateLimit() {
+        let before = userData();
+        let after = getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+        return after.lastReportAt == request.time
+          && (!('lastReportAt' in before)
+              || request.time > before.lastReportAt + duration.value(1, 'm'));
+      }
+
+      function isReporterEdit() {
+        return resource.data.reporterId == request.auth.uid
+          && resource.data.status == 'submitted'
+          && changedKeys().hasOnly(['title', 'description', 'location', 'updatedAt'])
+          && validDetails(request.resource.data)
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      // "Me too": add or remove only your own uid, never on your own report.
+      function isUpvoteToggle() {
+        let before = resource.data.upvoterIds;
+        let after = request.resource.data.upvoterIds;
+        let me = [request.auth.uid].toSet();
+        return canView(resource.data)
+          && resource.data.reporterId != request.auth.uid
+          && changedKeys().hasOnly(['upvoterIds'])
+          && after is list
+          && ((!(request.auth.uid in before)
+                && after.size() == before.size() + 1
+                && after.toSet() == before.toSet().union(me))
+              || ((request.auth.uid in before)
+                && after.size() == before.size() - 1
+                && after.toSet() == before.toSet().difference(me)));
+      }
+
+      function isStaffUpdate() {
+        return isStaff()
+          && changedKeys().hasOnly(['status', 'priority', 'updatedAt'])
+          && validStatus(request.resource.data.status)
+          && request.resource.data.priority in [null, 'low', 'medium', 'high']
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      // A missing document is readable so listeners see deletions cleanly.
+      allow get: if verified() && (resource == null || canView(resource.data));
+      allow list: if verified() && canView(resource.data);
+
+      allow create: if verified()
+        && request.resource.data.keys().hasOnly(incidentFields())
+        && request.resource.data.keys().hasAll(incidentFields())
+        && request.resource.data.reporterId == request.auth.uid
+        && validDetails(request.resource.data)
+        && request.resource.data.category in ['facilities', 'water', 'electricity',
+             'furniture', 'sanitation', 'safety', 'internet', 'other']
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.priority == null
+        && request.resource.data.isAnonymous is bool
+        && request.resource.data.isPrivate is bool
+        && (request.resource.data.category != 'safety'
+            || request.resource.data.isPrivate == true)
+        && (request.resource.data.isAnonymous
+            ? request.resource.data.reporterName == null
+            : request.resource.data.reporterName == userData().displayName)
+        && request.resource.data.upvoterIds == []
+        && (request.resource.data.photoPath == null) == (request.resource.data.photoUrl == null)
+        && (request.resource.data.photoPath == null
+            || request.resource.data.photoPath
+                 == 'incidents/' + request.auth.uid + '/' + incidentId + '.jpg')
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && isWithinRateLimit();
+
+      allow update: if verified()
+        && (isReporterEdit() || isUpvoteToggle() || isStaffUpdate());
+
+      allow delete: if verified()
+        && (isStaff()
+            || (resource.data.reporterId == request.auth.uid
+                && resource.data.status == 'submitted'));
+
+      match /updates/{updateId} {
+        function parent() {
+          return get(/databases/$(database)/documents/incidents/$(incidentId)).data;
+        }
+
+        allow read: if verified() && canView(parent());
+
+        // Written in the same batch as the status change it describes.
+        allow create: if isStaff()
+          && request.resource.data.keys().hasOnly(['status', 'note', 'authorId', 'authorName', 'createdAt'])
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.authorName == userData().displayName
+          && validStatus(request.resource.data.status)
+          && getAfter(/databases/$(database)/documents/incidents/$(incidentId)).data.status
+               == request.resource.data.status
+          && (request.resource.data.note == null
+              || isText(request.resource.data.note, 1, 300))
+          && (request.resource.data.status != 'rejected'
+              || request.resource.data.note is string)
+          && request.resource.data.createdAt == request.time;
+
+        allow update: if false;
+
+        allow delete: if verified()
+          && (isStaff()
+              || (parent().reporterId == request.auth.uid
+                  && parent().status == 'submitted'));
+      }
+    }
+  }
+}

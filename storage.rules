@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Incident photos live at incidents/{ownerUid}/{incidentId}.jpg.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function verified() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower()
+             .matches('^[^@]+@(alustudent|alueducation)[.]com$');
+    }
+
+    function isStaff() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid))
+        .data.role in ['staff', 'admin'];
+    }
+
+    function incident(fileName) {
+      return firestore.get(
+        /databases/(default)/documents/incidents/$(fileName.split('[.]')[0]));
+    }
+
+    match /incidents/{ownerId}/{fileName} {
+      // Owner and staff always; others only when the report is public.
+      allow read: if verified()
+        && (request.auth.uid == ownerId
+            || isStaff()
+            || incident(fileName).data.isPrivate == false);
+
+      // The app compresses to JPEG on the device before uploading.
+      allow create: if verified()
+        && request.auth.uid == ownerId
+        && fileName.matches('^[A-Za-z0-9]+[.]jpg$')
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg';
+
+      allow update: if false;
+
+      allow delete: if verified() && (request.auth.uid == ownerId || isStaff());
+    }
+  }
+}
