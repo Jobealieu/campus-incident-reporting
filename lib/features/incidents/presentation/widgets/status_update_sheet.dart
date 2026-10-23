@@ -33,6 +33,9 @@ class _StatusUpdateSheetState extends ConsumerState<_StatusUpdateSheet> {
   final _note = TextEditingController();
   late IncidentStatus _status = widget.incident.status;
   late IncidentPriority? _priority = widget.incident.priority;
+  // Validate live once the user has tried to save, so errors clear as the
+  // status or note changes.
+  bool _attemptedSave = false;
 
   bool get _noteRequired =>
       _status == IncidentStatus.rejected || _status == IncidentStatus.resolved;
@@ -49,6 +52,7 @@ class _StatusUpdateSheetState extends ConsumerState<_StatusUpdateSheet> {
   }
 
   Future<void> _save() async {
+    setState(() => _attemptedSave = true);
     if (!_formKey.currentState!.validate()) return;
     final ok = await ref
         .read(incidentActionsProvider.notifier)
@@ -87,6 +91,9 @@ class _StatusUpdateSheetState extends ConsumerState<_StatusUpdateSheet> {
       ),
       child: Form(
         key: _formKey,
+        autovalidateMode: _attemptedSave
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
         onChanged: () => setState(() {}),
         child: SingleChildScrollView(
           child: Column(
@@ -112,6 +119,7 @@ class _StatusUpdateSheetState extends ConsumerState<_StatusUpdateSheet> {
                 children: [
                   for (final status in IncidentStatus.values)
                     ChoiceChip(
+                      showCheckmark: false,
                       avatar: Icon(status.icon, size: 18, color: status.color),
                       label: Text(status.label),
                       selected: _status == status,
@@ -123,6 +131,7 @@ class _StatusUpdateSheetState extends ConsumerState<_StatusUpdateSheet> {
               Text('Priority', style: label),
               const SizedBox(height: 8),
               SegmentedButton<IncidentPriority?>(
+                showSelectedIcon: false,
                 segments: [
                   const ButtonSegment(value: null, label: Text('None')),
                   for (final priority in IncidentPriority.values)

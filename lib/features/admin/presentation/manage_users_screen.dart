@@ -93,7 +93,11 @@ class _ManageUsersScreenState extends ConsumerState<ManageUsersScreen> {
                         title: Text(
                           isMe ? '${user.displayName} (you)' : user.displayName,
                         ),
-                        subtitle: Text(user.email),
+                        subtitle: Text(
+                          user.email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         trailing: DropdownButton<UserRole>(
                           value: user.role,
                           underline: const SizedBox.shrink(),

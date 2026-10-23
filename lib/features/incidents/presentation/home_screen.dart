@@ -158,7 +158,10 @@ class _HeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          colors: [scheme.primary, scheme.tertiary],
+          colors: [
+            scheme.primary,
+            Color.lerp(scheme.primary, scheme.inversePrimary, 0.45)!,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
