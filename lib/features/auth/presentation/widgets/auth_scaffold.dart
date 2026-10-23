@@ -97,6 +97,16 @@ class PasswordField extends StatefulWidget {
 class _PasswordFieldState extends State<PasswordField> {
   bool _obscured = true;
 
+  // Keeps the show/hide button out of keyboard "Next" traversal so Next
+  // moves to the following field instead of landing on the icon.
+  final _toggleFocus = FocusNode(skipTraversal: true);
+
+  @override
+  void dispose() {
+    _toggleFocus.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextFormField(
@@ -110,6 +120,7 @@ class _PasswordFieldState extends State<PasswordField> {
         labelText: widget.label,
         prefixIcon: const Icon(Icons.lock_outline_rounded),
         suffixIcon: IconButton(
+          focusNode: _toggleFocus,
           tooltip: _obscured ? 'Show password' : 'Hide password',
           icon: Icon(
             _obscured
