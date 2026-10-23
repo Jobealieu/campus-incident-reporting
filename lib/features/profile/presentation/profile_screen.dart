@@ -97,7 +97,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       SummaryTile(
-                        label: 'In progress',
+                        label: 'Open',
                         count: summary.submitted + summary.active,
                         icon: IncidentStatus.inProgress.icon,
                         color: IncidentStatus.underReview.color,

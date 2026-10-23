@@ -135,11 +135,17 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      isScrollControlled: true,
       builder: (context) => SafeArea(
         child: ListView(
           shrinkWrap: true,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(
+                'Choose a campus location',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
             for (final place in campusLocations)
               ListTile(
                 leading: const Icon(Icons.place_outlined),

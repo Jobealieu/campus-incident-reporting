@@ -1,11 +1,18 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
+
+/// `flutter run --dart-define=USE_FIREBASE_EMULATORS=true` talks to the local
+/// Firebase emulators instead of the live project.
+const _useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +27,29 @@ Future<void> main() async {
     return true;
   };
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (_useEmulators) {
+    await _connectToEmulators();
+  } else {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
   runApp(const ProviderScope(child: CampusFixApp()));
+}
+
+Future<void> _connectToEmulators() async {
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: 'demo-key',
+      appId: '1:1:android:1',
+      messagingSenderId: '1',
+      projectId: 'demo-campusfix',
+      storageBucket: 'demo-campusfix.appspot.com',
+    ),
+  );
+  // 10.0.2.2 is the host machine as seen from the Android emulator.
+  const host = '10.0.2.2';
+  await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+  FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+  await FirebaseStorage.instance.useStorageEmulator(host, 9199);
 }

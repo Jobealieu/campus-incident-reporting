@@ -182,7 +182,9 @@ class _IncidentDetail extends ConsumerWidget {
           const SizedBox(height: 24),
           const _Heading('Description'),
           Text(incident.description, style: theme.textTheme.bodyLarge),
-          if (!incident.isReportedBy(user.uid) && incident.status.isOpen) ...[
+          if (!user.isStaff &&
+              !incident.isReportedBy(user.uid) &&
+              incident.status.isOpen) ...[
             const SizedBox(height: 20),
             _MeTooButton(incident: incident, uid: user.uid),
           ],

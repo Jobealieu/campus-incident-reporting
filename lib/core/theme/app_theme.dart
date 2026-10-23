@@ -11,6 +11,8 @@ abstract final class AppTheme {
     final scheme = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: brightness,
+      // Keeps the primary colour close to the brand purple.
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
     final radius = BorderRadius.circular(14);
 
@@ -37,6 +39,7 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerLowest,
+        errorMaxLines: 2,
         border: OutlineInputBorder(borderRadius: radius),
         enabledBorder: OutlineInputBorder(
           borderRadius: radius,
