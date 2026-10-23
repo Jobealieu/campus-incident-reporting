@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/providers/firebase_providers.dart';
 import '../../auth/application/auth_providers.dart';
@@ -14,12 +15,26 @@ import '../domain/incident_enums.dart';
 import '../domain/incident_filter.dart';
 import '../domain/incident_summary.dart';
 
+final photoStoreProvider = Provider<PhotoStore>(
+  (ref) => AppConfig.usePhotoBucket
+      ? StoragePhotoStore(ref.watch(firebaseStorageProvider))
+      : FirestorePhotoStore(ref.watch(firestoreProvider)),
+);
+
 final incidentRepositoryProvider = Provider<IncidentRepository>(
   (ref) => IncidentRepository(
     ref.watch(firestoreProvider),
-    PhotoStorage(ref.watch(firebaseStorageProvider)),
+    ref.watch(photoStoreProvider),
   ),
 );
+
+/// JPEG bytes of a photo kept in Firestore, cached for the session so list
+/// thumbnails don't refetch while scrolling.
+final incidentPhotoBytesProvider = FutureProvider.autoDispose
+    .family<Uint8List?, String>((ref, path) {
+      ref.keepAlive();
+      return FirestorePhotoStore(ref.watch(firestoreProvider)).read(path);
+    });
 
 final _uidProvider = Provider<String?>(
   (ref) => ref.watch(currentUserProvider.select((user) => user.value?.uid)),

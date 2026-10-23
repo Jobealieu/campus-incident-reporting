@@ -8,11 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/config/app_config.dart';
 import 'firebase_options.dart';
-
-/// `flutter run --dart-define=USE_FIREBASE_EMULATORS=true` talks to the local
-/// Firebase emulators instead of the live project.
-const _useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +24,7 @@ Future<void> main() async {
     return true;
   };
 
-  if (_useEmulators) {
+  if (AppConfig.useEmulators) {
     await _connectToEmulators();
   } else {
     await Firebase.initializeApp(

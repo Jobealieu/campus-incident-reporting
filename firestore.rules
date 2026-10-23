@@ -107,6 +107,19 @@ service cloud.firestore {
               || request.time > before.lastReportAt + duration.value(1, 'm'));
       }
 
+      // No photo; a Storage photo with its download URL; or a photo document
+      // in incidentPhotos (free Spark plan) that the reporter already owns.
+      function hasValidPhoto(data) {
+        let photoDoc = /databases/$(database)/documents/incidentPhotos/$(incidentId);
+        return (data.photoPath == null && data.photoUrl == null)
+          || (data.photoPath == 'incidents/' + request.auth.uid + '/' + incidentId + '.jpg'
+              && data.photoUrl is string)
+          || (data.photoPath == 'incidentPhotos/' + incidentId
+              && data.photoUrl == null
+              && exists(photoDoc)
+              && get(photoDoc).data.ownerId == request.auth.uid);
+      }
+
       function isReporterEdit() {
         return resource.data.reporterId == request.auth.uid
           && resource.data.status == 'submitted'
@@ -161,10 +174,7 @@ service cloud.firestore {
             ? request.resource.data.reporterName == null
             : request.resource.data.reporterName == userData().displayName)
         && request.resource.data.upvoterIds == []
-        && (request.resource.data.photoPath == null) == (request.resource.data.photoUrl == null)
-        && (request.resource.data.photoPath == null
-            || request.resource.data.photoPath
-                 == 'incidents/' + request.auth.uid + '/' + incidentId + '.jpg')
+        && hasValidPhoto(request.resource.data)
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && isWithinRateLimit();
@@ -205,6 +215,36 @@ service cloud.firestore {
               || (parent().reporterId == request.auth.uid
                   && parent().status == 'submitted'));
       }
+    }
+
+    // Compressed JPEG bytes for one incident's photo. Uploaded just before the
+    // incident itself, so creation is limited to the owner of a new incident.
+    match /incidentPhotos/{incidentId} {
+      function incidentPath() {
+        return /databases/$(database)/documents/incidents/$(incidentId);
+      }
+
+      allow get: if verified()
+        && (resource == null
+            || resource.data.ownerId == request.auth.uid
+            || isStaff()
+            || (exists(incidentPath()) && get(incidentPath()).data.isPrivate == false));
+
+      allow list: if false;
+
+      allow create: if verified()
+        && request.resource.data.keys().hasOnly(['ownerId', 'image', 'contentType', 'createdAt'])
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.image is bytes
+        && request.resource.data.image.size() < 900 * 1024
+        && request.resource.data.contentType == 'image/jpeg'
+        && request.resource.data.createdAt == request.time
+        && !exists(incidentPath());
+
+      allow update: if false;
+
+      allow delete: if verified()
+        && (resource.data.ownerId == request.auth.uid || isStaff());
     }
   }
 }

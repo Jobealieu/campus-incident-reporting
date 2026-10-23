@@ -12,6 +12,7 @@ import '../application/incident_providers.dart';
 import '../domain/incident.dart';
 import '../domain/incident_enums.dart';
 import 'widgets/incident_badges.dart';
+import 'widgets/incident_photo.dart';
 import 'widgets/status_timeline.dart';
 import 'widgets/status_update_sheet.dart';
 
@@ -134,8 +135,8 @@ class _IncidentDetail extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          if (incident.photoUrl != null) ...[
-            _Photo(url: incident.photoUrl!),
+          if (incident.hasPhoto) ...[
+            _Photo(incident: incident),
             const SizedBox(height: 16),
           ],
           Text(
@@ -266,9 +267,13 @@ class _ReporterRow extends ConsumerWidget {
 }
 
 class _Photo extends StatelessWidget {
-  const _Photo({required this.url});
+  const _Photo({required this.incident});
 
-  final String url;
+  final Incident incident;
+
+  static const _broken = Center(
+    child: Icon(Icons.broken_image_outlined, size: 40),
+  );
 
   void _openFullScreen(BuildContext context) {
     showDialog<void>(
@@ -277,7 +282,15 @@ class _Photo extends StatelessWidget {
         backgroundColor: Colors.black,
         child: Stack(
           children: [
-            Center(child: InteractiveViewer(child: Image.network(url))),
+            Center(
+              child: InteractiveViewer(
+                child: IncidentPhotoImage(
+                  incident: incident,
+                  fit: BoxFit.contain,
+                  fallback: _broken,
+                ),
+              ),
+            ),
             SafeArea(
               child: IconButton(
                 tooltip: 'Close',
@@ -303,16 +316,7 @@ class _Photo extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: AspectRatio(
             aspectRatio: 16 / 10,
-            child: Image.network(
-              url,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) => progress == null
-                  ? child
-                  : const Center(child: CircularProgressIndicator()),
-              errorBuilder: (_, _, _) => const Center(
-                child: Icon(Icons.broken_image_outlined, size: 40),
-              ),
-            ),
+            child: IncidentPhotoImage(incident: incident, fallback: _broken),
           ),
         ),
       ),
