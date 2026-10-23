@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../errors/app_exception.dart';
+
 class EmptyState extends StatelessWidget {
   const EmptyState({
     required this.icon,
@@ -97,6 +99,7 @@ class AsyncValueView<T> extends StatelessWidget {
 
 /// Converts exceptions into short messages that are safe to show to users.
 String describeError(Object error) {
+  if (error is AppException) return error.message;
   final text = error.toString();
   if (text.contains('permission-denied')) {
     return 'You do not have permission to do that.';
@@ -104,7 +107,5 @@ String describeError(Object error) {
   if (text.contains('unavailable') || text.contains('network')) {
     return 'Check your internet connection and try again.';
   }
-  if (error is StateError) return error.message;
-  if (error is ArgumentError) return '${error.message}';
   return 'Please try again in a moment.';
 }

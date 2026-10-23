@@ -4,6 +4,8 @@ analyzer:
   exclude:
     - build/**
     - lib/firebase_options.dart
+    - android/**
+    - ios/**
   language:
     strict-casts: true
     strict-raw-types: true
