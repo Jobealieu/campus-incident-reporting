@@ -76,8 +76,15 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
     _title.dispose();
     _description.dispose();
     _location.dispose();
+    _formFocus.dispose();
     super.dispose();
   }
+
+  // Closing a sheet hands focus back to whatever had it before. Parking focus
+  // on a non-text node first stops the keyboard reopening after the sheet.
+  final _formFocus = FocusNode(skipTraversal: true);
+
+  void _parkFocus() => _formFocus.requestFocus();
 
   void _markDirty() {
     if (!_isDirty) setState(() => _isDirty = true);
@@ -93,8 +100,7 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
   }
 
   Future<void> _pickPhoto() async {
-    // Otherwise focus returns to the last text field and reopens the keyboard.
-    FocusScope.of(context).unfocus();
+    _parkFocus();
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
@@ -136,7 +142,7 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
   }
 
   Future<void> _pickLocation() async {
-    FocusScope.of(context).unfocus();
+    _parkFocus();
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -243,135 +249,140 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
           title: Text(_isEditing ? 'Edit report' : 'Report an incident'),
         ),
         body: SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode: _attemptedSubmit
-                ? AutovalidateMode.always
-                : AutovalidateMode.disabled,
-            onChanged: _markDirty,
-            // Not a ListView: a lazy list disposes off-screen fields, and
-            // Form.validate() would then skip them.
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _SectionLabel(_isEditing ? 'Category' : 'Select a category'),
-                  _CategoryPicker(
-                    selected: _category,
-                    enabled: !_isEditing,
-                    onSelected: (category) => setState(() {
-                      _category = category;
-                      _showCategoryError = false;
-                      _isDirty = true;
-                    }),
-                  ),
-                  if (_showCategoryError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        'Choose the category that best fits the issue',
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
+          child: Focus(
+            focusNode: _formFocus,
+            child: Form(
+              key: _formKey,
+              autovalidateMode: _attemptedSubmit
+                  ? AutovalidateMode.always
+                  : AutovalidateMode.disabled,
+              onChanged: _markDirty,
+              // Not a ListView: a lazy list disposes off-screen fields, and
+              // Form.validate() would then skip them.
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(
+                      _isEditing ? 'Category' : 'Select a category',
                     ),
-                  const _SectionLabel('Title'),
-                  TextFormField(
-                    controller: _title,
-                    maxLength: _titleMax,
-                    textCapitalization: TextCapitalization.sentences,
-                    textInputAction: TextInputAction.next,
-                    validator: Validators.requiredText(
-                      'Title',
-                      min: 5,
-                      max: _titleMax,
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: 'Briefly describe the issue',
-                    ),
-                  ),
-                  const _SectionLabel('Description'),
-                  TextFormField(
-                    controller: _description,
-                    minLines: 4,
-                    maxLines: 8,
-                    maxLength: _descriptionMax,
-                    textCapitalization: TextCapitalization.sentences,
-                    validator: Validators.requiredText(
-                      'Description',
-                      min: 10,
-                      max: _descriptionMax,
-                    ),
-                    decoration: const InputDecoration(
-                      hintText:
-                          'What happened, when, and how it affects people',
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                  const _SectionLabel('Location'),
-                  TextFormField(
-                    controller: _location,
-                    textCapitalization: TextCapitalization.words,
-                    validator: Validators.requiredText(
-                      'Location',
-                      min: 2,
-                      max: 100,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'e.g. Library, 2nd floor',
-                      prefixIcon: const Icon(Icons.place_outlined),
-                      suffixIcon: IconButton(
-                        tooltip: 'Choose a campus location',
-                        icon: const Icon(Icons.expand_more_rounded),
-                        onPressed: _pickLocation,
-                      ),
-                    ),
-                  ),
-                  if (!_isEditing) ...[
-                    const _SectionLabel('Add a photo (optional)'),
-                    _PhotoPicker(
-                      photo: _photo,
-                      onPick: _pickPhoto,
-                      onRemove: () => setState(() => _photo = null),
-                    ),
-                    const SizedBox(height: 16),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _isAnonymous,
-                      onChanged: (value) => setState(() {
-                        _isAnonymous = value;
+                    _CategoryPicker(
+                      selected: _category,
+                      enabled: !_isEditing,
+                      onSelected: (category) => setState(() {
+                        _category = category;
+                        _showCategoryError = false;
                         _isDirty = true;
                       }),
-                      title: const Text('Report anonymously'),
-                      subtitle: const Text(
-                        'Your name is hidden from other students. Staff can '
-                        'still follow up with you.',
+                    ),
+                    if (_showCategoryError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Choose the category that best fits the issue',
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                      ),
+                    const _SectionLabel('Title'),
+                    TextFormField(
+                      controller: _title,
+                      maxLength: _titleMax,
+                      textCapitalization: TextCapitalization.sentences,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.requiredText(
+                        'Title',
+                        min: 5,
+                        max: _titleMax,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Briefly describe the issue',
                       ),
                     ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _isPrivate || forcedPrivate,
-                      onChanged: forcedPrivate
-                          ? null
-                          : (value) => setState(() {
-                              _isPrivate = value;
-                              _isDirty = true;
-                            }),
-                      title: const Text('Keep private'),
-                      subtitle: Text(
-                        forcedPrivate
-                            ? 'Safety reports are always visible only to you '
-                                  'and campus staff.'
-                            : 'Only you and campus staff will see this report.',
+                    const _SectionLabel('Description'),
+                    TextFormField(
+                      controller: _description,
+                      minLines: 4,
+                      maxLines: 8,
+                      maxLength: _descriptionMax,
+                      textCapitalization: TextCapitalization.sentences,
+                      validator: Validators.requiredText(
+                        'Description',
+                        min: 10,
+                        max: _descriptionMax,
                       ),
+                      decoration: const InputDecoration(
+                        hintText:
+                            'What happened, when, and how it affects people',
+                        alignLabelWithHint: true,
+                      ),
+                    ),
+                    const _SectionLabel('Location'),
+                    TextFormField(
+                      controller: _location,
+                      textCapitalization: TextCapitalization.words,
+                      validator: Validators.requiredText(
+                        'Location',
+                        min: 2,
+                        max: 100,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Library, 2nd floor',
+                        prefixIcon: const Icon(Icons.place_outlined),
+                        suffixIcon: IconButton(
+                          tooltip: 'Choose a campus location',
+                          icon: const Icon(Icons.expand_more_rounded),
+                          onPressed: _pickLocation,
+                        ),
+                      ),
+                    ),
+                    if (!_isEditing) ...[
+                      const _SectionLabel('Add a photo (optional)'),
+                      _PhotoPicker(
+                        photo: _photo,
+                        onPick: _pickPhoto,
+                        onRemove: () => setState(() => _photo = null),
+                      ),
+                      const SizedBox(height: 16),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _isAnonymous,
+                        onChanged: (value) => setState(() {
+                          _isAnonymous = value;
+                          _isDirty = true;
+                        }),
+                        title: const Text('Report anonymously'),
+                        subtitle: const Text(
+                          'Your name is hidden from other students. Staff can '
+                          'still follow up with you.',
+                        ),
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _isPrivate || forcedPrivate,
+                        onChanged: forcedPrivate
+                            ? null
+                            : (value) => setState(() {
+                                _isPrivate = value;
+                                _isDirty = true;
+                              }),
+                        title: const Text('Keep private'),
+                        subtitle: Text(
+                          forcedPrivate
+                              ? 'Safety reports are always visible only to you '
+                                    'and campus staff.'
+                              : 'Only you and campus staff will see this report.',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    LoadingButton(
+                      label: _isEditing ? 'Save changes' : 'Submit report',
+                      isLoading: isSaving,
+                      onPressed: _submit,
                     ),
                   ],
-                  const SizedBox(height: 24),
-                  LoadingButton(
-                    label: _isEditing ? 'Save changes' : 'Submit report',
-                    isLoading: isSaving,
-                    onPressed: _submit,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

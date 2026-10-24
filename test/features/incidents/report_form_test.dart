@@ -37,4 +37,30 @@ void main() {
     await tester.pump();
     expect(find.text('Title is required'), findsNothing);
   });
+
+  testWidgets('choosing a location does not hand focus back to a text field', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: ReportFormScreen())),
+    );
+
+    final title = find.widgetWithText(
+      TextFormField,
+      'Briefly describe the issue',
+    );
+    await tester.ensureVisible(title);
+    await tester.tap(title);
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    await tester.ensureVisible(find.byTooltip('Choose a campus location'));
+    await tester.tap(find.byTooltip('Choose a campus location'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Library'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextFormField, 'Library'), findsOneWidget);
+    expect(tester.testTextInput.isVisible, isFalse);
+  });
 }
