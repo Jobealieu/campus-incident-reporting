@@ -28,5 +28,13 @@ void main() {
       find.text('Choose the category that best fits the issue'),
       findsOneWidget,
     );
+
+    // Fixing a field clears its error straight away.
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Briefly describe the issue'),
+      'Projector not working',
+    );
+    await tester.pump();
+    expect(find.text('Title is required'), findsNothing);
   });
 }

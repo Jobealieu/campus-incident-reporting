@@ -66,6 +66,8 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
   bool _isPrivate = false;
   bool _showCategoryError = false;
   bool _isDirty = false;
+  // After the first submit attempt, errors update live as fields are fixed.
+  bool _attemptedSubmit = false;
 
   bool get _isEditing => widget.existing != null;
 
@@ -167,7 +169,10 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
 
   Future<void> _submit() async {
     final formValid = _formKey.currentState!.validate();
-    setState(() => _showCategoryError = _category == null);
+    setState(() {
+      _attemptedSubmit = true;
+      _showCategoryError = _category == null;
+    });
     if (!formValid || _category == null) return;
     FocusScope.of(context).unfocus();
 
@@ -240,6 +245,9 @@ class _ReportFormState extends ConsumerState<_ReportForm> {
         body: SafeArea(
           child: Form(
             key: _formKey,
+            autovalidateMode: _attemptedSubmit
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
             onChanged: _markDirty,
             // Not a ListView: a lazy list disposes off-screen fields, and
             // Form.validate() would then skip them.
