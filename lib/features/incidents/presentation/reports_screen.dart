@@ -37,6 +37,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     // Wrapped in a record so "All categories" (null) differs from dismissal.
     final choice = await showModalBottomSheet<({IncidentCategory? value})>(
       context: context,
+      // Above the shell, so the tab bar and Report button don't cover it.
+      useRootNavigator: true,
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) => SafeArea(
@@ -90,6 +92,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               leading: const Icon(Icons.search_rounded),
               elevation: const WidgetStatePropertyAll(0),
               onChanged: notifier.setQuery,
+              // Otherwise the field keeps focus after the keyboard is
+              // dismissed, and closing a sheet or route reopens it.
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
               trailing: [
                 if (filter.query.isNotEmpty)
                   IconButton(
