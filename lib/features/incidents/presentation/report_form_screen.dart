@@ -26,12 +26,14 @@ class ReportFormScreen extends ConsumerWidget {
     final id = incidentId;
     if (id == null) return const _ReportForm();
 
-    return AsyncValueView(
+    return AsyncPageView(
       value: ref.watch(incidentProvider(id)),
+      title: 'Edit report',
       onRetry: () => ref.invalidate(incidentProvider(id)),
       data: (incident) => incident == null
-          ? const Scaffold(
-              body: EmptyState(
+          ? Scaffold(
+              appBar: AppBar(),
+              body: const EmptyState(
                 icon: Icons.search_off_rounded,
                 title: 'This report no longer exists',
               ),
