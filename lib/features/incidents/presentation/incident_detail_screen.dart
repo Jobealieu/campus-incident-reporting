@@ -26,8 +26,9 @@ class IncidentDetailScreen extends ConsumerWidget {
     final incident = ref.watch(incidentProvider(incidentId));
     final user = ref.watch(currentUserProvider).value;
 
-    return AsyncValueView(
+    return AsyncPageView(
       value: incident,
+      title: 'Incident details',
       onRetry: () => ref.invalidate(incidentProvider(incidentId)),
       data: (incident) {
         if (incident == null || user == null) {

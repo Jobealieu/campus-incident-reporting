@@ -97,6 +97,37 @@ class AsyncValueView<T> extends StatelessWidget {
   }
 }
 
+/// [AsyncValueView] for a whole route: loading and error get a page with an
+/// app bar, so they never show as a bare spinner on black or trap the user
+/// without a back button.
+class AsyncPageView<T> extends StatelessWidget {
+  const AsyncPageView({
+    required this.value,
+    required this.data,
+    required this.title,
+    this.onRetry,
+    super.key,
+  });
+
+  final AsyncValue<T> value;
+  final Widget Function(T data) data;
+  final String title;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget page(Widget body) => Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: body,
+    );
+    return value.when(
+      data: data,
+      loading: () => page(const Center(child: CircularProgressIndicator())),
+      error: (error, _) => page(ErrorView(error: error, onRetry: onRetry)),
+    );
+  }
+}
+
 /// Converts exceptions into short messages that are safe to show to users.
 String describeError(Object error) {
   if (error is AppException) return error.message;
