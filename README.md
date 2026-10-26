@@ -1,5 +1,7 @@
 # CampusFix
 
+**[Watch the 7-minute demo](https://youtu.be/VMkwPiMMgJY)**
+
 CampusFix is a Flutter mobile app for the African Leadership University community. Students report campus problems such as broken facilities, water shortages, power outages, damaged furniture, sanitation issues and safety concerns. Campus staff review the reports, set priorities and post progress until each one is resolved.
 
 ## Features
@@ -74,7 +76,10 @@ incidents/{incidentId}/updates/{updateId}     # status timeline
   status, note, authorId, authorName, createdAt
 ```
 
-Storage: `incidents/{reporterUid}/{incidentId}.jpg`
+Photos sit behind a `PhotoStore` interface with two implementations:
+
+- **Firebase Storage**: `incidents/{reporterUid}/{incidentId}.jpg`, protected by `storage.rules`. Used with the emulators, or with `--dart-define=USE_STORAGE_BUCKET=true` on a project that has a bucket.
+- **Firestore**: `incidentPhotos/{incidentId}` holds the compressed image (under 900 KB) as bytes. The live project uses this because Cloud Storage buckets now require the paid Blaze plan.
 
 ## Security
 
@@ -89,14 +94,14 @@ Storage: `incidents/{reporterUid}/{incidentId}.jpg`
 
 ## Getting started
 
-Prerequisites: Flutter 3.47+, a Firebase project on the Blaze plan (required for Storage), the Firebase CLI and the FlutterFire CLI.
+Prerequisites: Flutter 3.47+, a Firebase project, the Firebase CLI and the FlutterFire CLI. The free Spark plan is enough; a Storage bucket (Blaze plan) is optional.
 
 ```bash
-git clone <repo-url> && cd campus_incident_app
+git clone https://github.com/Jobealieu/campus-incident-reporting.git && cd campus-incident-reporting
 flutter pub get
 flutterfire configure            # generates lib/firebase_options.dart
-firebase deploy --only firestore:rules,firestore:indexes,storage
-flutter run
+firebase deploy --only firestore:rules,firestore:indexes
+flutter run                      # add --dart-define=USE_STORAGE_BUCKET=true and deploy storage if you have a bucket
 ```
 
 In the Firebase Console, enable **Email/Password** sign-in. To create the first admin, sign up in the app, then set `role` to `admin` on that user's document in `users/` from the console. After that, admins manage roles in the app.
@@ -105,9 +110,9 @@ In the Firebase Console, enable **Email/Password** sign-in. To create the first 
 
 ```bash
 flutter analyze
-flutter test                     # unit, repository and widget tests
+flutter test                     # 40 unit, repository and widget tests
 
-# Security rules (needs Java 21+)
+# 35 security-rules tests (needs Java 21+)
 firebase emulators:exec --only firestore --project demo-campusfix "flutter test test_rules"
 ```
 
@@ -120,4 +125,10 @@ flutter run --dart-define=USE_FIREBASE_EMULATORS=true
 
 ## Demo
 
-- Demo video: _link to be added_
+- Demo video: https://youtu.be/VMkwPiMMgJY
+
+| Report form | Staff update | Status timeline | Browse and filter |
+| --- | --- | --- | --- |
+| ![Report form](docs/screenshots/05_report_form.png) | ![Staff update](docs/screenshots/12_status_update.png) | ![Status timeline](docs/screenshots/14_status_timeline.png) | ![Browse and filter](docs/screenshots/09_browse_and_filter.png) |
+
+More screens are in [docs/screenshots](docs/screenshots).
